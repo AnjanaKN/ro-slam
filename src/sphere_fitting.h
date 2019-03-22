@@ -9,7 +9,7 @@ public:
 		fitted_spheres=0;
 	}
 
-pcl::PointXYZ fit_sphere(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float distance_threshold=0.01, float radius_guess=0.1, bool print_flag=false){
+float fit_sphere(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr center,float distance_threshold=0.01, float radius_guess=0.1, bool print_flag=false){
 
 	pcl::SampleConsensusModelSphere<pcl::PointXYZ>::Ptr model_s(new pcl::SampleConsensusModelSphere<pcl::PointXYZ> (cloud));
 	vector<int> inliers;
@@ -19,17 +19,20 @@ pcl::PointXYZ fit_sphere(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float 
     ransac.getInliers(inliers);
   	Eigen::VectorXf modCoeffs;
     if (print_flag){
-	    cout<<"Total points: "<<cloud->points.size()<<"  Fitted points: "<<inliers.size()<<endl;
+	    //cout<<"Total points: "<<cloud->points.size()<<"  Fitted points: "<<inliers.size()<<endl;
 	    ransac.getModelCoefficients(modCoeffs);
-	    cout<<"Sphere coefficients(r) "<<modCoeffs[3]<<endl;
+	    if (modCoeffs[3]<0.03 & modCoeffs[3] >0.008)
+    	{
+    		fitted_spheres++;
+	    	//cout<<"Sphere coefficients(r) "<<modCoeffs[3]<<endl;
+    	}	
 	}
 
-	pcl::PointXYZ center;;
-	center.x=modCoeffs[0];
-	center.y=modCoeffs[1];
-    center.z=modCoeffs[2];	
-    fitted_spheres++;
-	return center;//inliers;
+	center->push_back(pcl::PointXYZ (modCoeffs[0],modCoeffs[1],modCoeffs[2]));
+
+
+
+	return modCoeffs[3];//inliers;
 }
 
 
