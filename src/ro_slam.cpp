@@ -1,10 +1,11 @@
 #include "sphere_fitting.h"
 #include "svd.h"
 #include "slam.h"
-#include "disparity.h"
+#include "disparity_class.h"
 #include "visualization.h"
 
-
+using namespace cv;
+//using namespace std;
 class Timer
 {
 public:
@@ -25,16 +26,23 @@ private:
 
 
 int main(){
-	
+	disparity_class d;
 
+
+	vector<cv::Point2i> im0_keypoints;
+ 	vector<cv::Point2i> im1_keypoints;
+
+	cv::Mat left_image,right_image;
+	vector<Point3f> points_wld;
+	//int waste=d.stereoTriangulateKeypoints(im0_keypoints,im1_keypoints, left_image, right_image, points_wld, 5);
     Timer tmr;
-    custom_svd S;
+    custom_svd Svd;
     fit_shape fs;
     Visualisation v;
-
+    //icp_slam slam;
 	ifstream inFile;
     inFile.open("/home/anjana/catkin_ws/centers.txt");
-	
+	//disparity_class d;
 	
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud (new pcl::PointCloud<pcl::PointXYZ>);
@@ -49,7 +57,9 @@ int main(){
 	pcl::PLYWriter w;
 	
 	string filename="/media/storagedrive/Thesis/Results/March18/filtered_177.ply";
+	string filename2="/media/storagedrive/Thesis/Results/March22/filtered_178.ply";
 	string center_cloud_name="/media/storagedrive/Thesis/Results/March18/Amask_center_cloud_177.ply";
+	string center_cloud_name="/media/storagedrive/Thesis/Results/March22/Amask_center_cloud_178.ply";
 	string out_name="/home/anjana/catkin_ws/src/ro_slam/outputs/grape_center_cloud.ply";
 
 
@@ -62,8 +72,10 @@ int main(){
 
 
 	
-//Create kdtree
+	//cloud=d.get_point_cloud(192,672,11,left_image, right_image,);
 
+
+//Create kdtree
   	kdtree->setInputCloud(cloud);
 
 	
@@ -73,10 +85,10 @@ int main(){
 		inFile>>searchPoint.y;
 		inFile>>searchPoint.z;
 		
-		roi_cloud=S.get_neighbors(0, 100,0.02,kdtree,cloud,searchPoint);
+		roi_cloud=Svd.get_neighbors(0, 400,0.02,kdtree,cloud,searchPoint);
 
-		S.compute_cov_matrix(roi_cloud);
-		S.compute_SVD(S.C);
+		Svd.compute_cov_matrix(roi_cloud);
+		Svd.compute_SVD(S.C);
 		
 
 		sphere_center->clear();
@@ -103,6 +115,11 @@ int main(){
 
 //Write centers to point cloud
 	w.write(out_name,*grape_center_cloud);
+
+
+//SLAM
+
+	//slam.point_to_point(const pcl::PointCloud<pcl::PointXYZ>::Ptr fixed, const pcl::PointCloud<pcl::PointXYZ>::Ptr moving);
 	
 
 //visdualize grapes as spheres

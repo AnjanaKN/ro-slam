@@ -3,9 +3,12 @@
 #include <fstream>
 #include <vector>
 #include <boost/make_shared.hpp>
+#include <boost/thread.hpp>
 #include <math.h>
 #include <ctime>
 #include <sstream>
+#include "stdio.h"
+#include "stdlib.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
