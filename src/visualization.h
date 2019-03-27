@@ -1,5 +1,14 @@
 
 #include "headers.h"
+namespace patch
+{
+    template < typename T > std::string to_string( const T& n )
+    {
+        std::ostringstream stm ;
+        stm << n ;
+        return stm.str() ;
+    }
+}
 
 
 class Visualisation{
@@ -17,8 +26,13 @@ public:
     viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sphere centercloud");
     viewer->addCoordinateSystem (1.0);
     viewer->initCameraParameters ();
+    string name;
+ 
     for (int i=0;i<mask_center_cloud->points.size();i++)
-    		viewer->addSphere (mask_center_cloud->points[i], 0.028, 0.5, 0.5, 0.0, "sphere");
+        {
+        name="sphere"+patch::to_string(i);
+    		viewer->addSphere (mask_center_cloud->points[i], 0.028, 0.5, 0.5, 0.0, name);
+      }
     return (viewer);
   }
 

@@ -9,30 +9,40 @@ public:
 		fitted_spheres=0;
 	}
 
-float fit_sphere(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr center,float distance_threshold=0.01, float radius_guess=0.1, bool print_flag=false){
-
-	pcl::SampleConsensusModelSphere<pcl::PointXYZ>::Ptr model_s(new pcl::SampleConsensusModelSphere<pcl::PointXYZ> (cloud));
+pcl::PointCloud<pcl::PointXYZ>::Ptr fit_sphere(const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr center,float distance_threshold=0.01, float radius_guess=0.1, bool print_flag=false){
 	vector<int> inliers;
+	pcl::ExtractIndices<pcl::PointXYZ> extract;
+	boost::shared_ptr< vector<int> > indicesPtr(new vector<int>(inliers));
+	pcl::SampleConsensusModelSphere<pcl::PointXYZ>::Ptr model_s(new pcl::SampleConsensusModelSphere<pcl::PointXYZ> (cloud));
+	pcl::PointCloud<pcl::PointXYZ>::Ptr sphere_cloud (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::RandomSampleConsensus<pcl::PointXYZ> ransac (model_s);
+
     ransac.setDistanceThreshold (distance_threshold);
     ransac.computeModel();
     ransac.getInliers(inliers);
   	Eigen::VectorXf modCoeffs;
+  	//sphere_cloud->clear();
     if (print_flag){
 	    //cout<<"Total points: "<<cloud->points.size()<<"  Fitted points: "<<inliers.size()<<endl;
 	    ransac.getModelCoefficients(modCoeffs);
-	    if (modCoeffs[3]<0.03 & modCoeffs[3] >0.008)
+	    if (modCoeffs[3]<0.029 & modCoeffs[3] >0.01)
     	{
     		fitted_spheres++;
+    		sphere_cloud->push_back(pcl::PointXYZ (modCoeffs[0],modCoeffs[1],modCoeffs[2]));
+    		/*extract.setInputCloud(cloud);
+    		extract.setIndices(indicesPtr);
+    		extract.setNegative(false);
+    		extract.filter(*sphere_cloud);*/
 	    	//cout<<"Sphere coefficients(r) "<<modCoeffs[3]<<endl;
     	}	
-	}
+	
+	//else sphere_cloud->push_back(pcl::PointXYZ (modCoeffs[0],modCoeffs[1],modCoeffs[2]));
+}
+	//center->push_back(pcl::PointXYZ (modCoeffs[0],modCoeffs[1],modCoeffs[2]));
+	
 
-	center->push_back(pcl::PointXYZ (modCoeffs[0],modCoeffs[1],modCoeffs[2]));
 
-
-
-	return modCoeffs[3];//inliers;
+	return sphere_cloud;//inliers;
 }
 
 

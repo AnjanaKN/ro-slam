@@ -6,33 +6,51 @@ class icp_slam{
 
 public:
 //Initializes the global cloud with inital cloud
+
+//pcl::PointCloud<pcl::PointXYZ> global_grape_cloud;
+//pcl::PointCloud<pcl::PointXYZ>::Ptr global_grape_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ> (global_grape_cloud));
+
+icp_slam(){}
 icp_slam(const pcl::PointCloud<pcl::PointXYZ>::Ptr initial_cloud){
 			grape_count=0;
-			pcl::copyPointCloud(*initial_cloud,*global_grape_cloud);
-			all_camera_positions[0]=Eigen::Matrix4f::Identity();
+			global_grape_cloud_ptr.reset( new pcl::PointCloud<pcl::PointXYZ> ); 
+			//cout<<"Declared"<<endl;
+			//cout<<"size: "<<initial_cloud->points.size()<<endl;
+			pcl::copyPointCloud(*initial_cloud,*global_grape_cloud_ptr);
+			
+			//cout<<"intialised global_cloud"<<endl;
+			all_camera_positions.push_back(Eigen::Matrix4f::Identity());
+			//cout<<"icp slam constructed"<<endl;
 	}
 
 
 void point_to_point(const pcl::PointCloud<pcl::PointXYZ>::Ptr fixed, const pcl::PointCloud<pcl::PointXYZ>::Ptr moving){
 
-	pcl::PointCloud<pcl::PointXYZ>::Ptr registered_cloud (new pcl::PointCloud<pcl::PointXYZ>);
+
+    Eigen::Matrix4f guess=Eigen::Matrix4f::Identity();
+    guess (1,3) =-0.62;
+    cout<<"guess: "<<guess<<endl;
+	pcl::PointCloud<pcl::PointXYZ>::Ptr registered_cloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
     icp.setInputSource(moving);
     icp.setInputTarget(fixed);
-    pcl::PointCloud<pcl::PointXYZ> Final;
+    icp.setRANSACOutlierRejectionThreshold(0.80);
+    //pcl::PointCloud<pcl::PointXYZ> Final;
 	// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
-	icp.setMaxCorrespondenceDistance (0.05);
+	icp.setMaxCorrespondenceDistance (0.15);
 	// Set the maximum number of iterations (criterion 1)
 	icp.setMaximumIterations (50);
 	// Set the transformation epsilon (criterion 2)
-	icp.setTransformationEpsilon (1e-8);
+	icp.setTransformationEpsilon (1e-9);
 	// Set the euclidean distance difference epsilon (criterion 3)
-	icp.setEuclideanFitnessEpsilon (1);
+	//icp.setEuclideanFitnessEpsilon (1);
 	// Perform the alignment
-	icp.align(*registered_cloud);
+	//icp.computeTransformation (registered_cloud, guess);
+	icp.align(*registered_cloud,guess);
 	// Obtain the transformation that aligned cloud_source to cloud_source_registered
 	local_transformation = icp.getFinalTransformation ();
 	global_transformation=local_transformation*global_transformation;
+	cout<<"Point to point icp done in "<<endl;
 }
 
 
@@ -90,7 +108,7 @@ void point_to_plane(const pcl::PointCloud<pcl::PointXYZ>::Ptr tgt, const pcl::Po
 
 int count_grapes(){
 
-	grape_count=global_grape_cloud->points.size();
+	grape_count=global_grape_cloud_ptr->points.size();
 
 	return grape_count;
 }
@@ -121,8 +139,8 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr output_global_grape_map(const pcl::PointClou
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr temp (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::transformPointCloud (*src, *temp, global_transformation);
-    *global_grape_cloud += *temp;
-    return global_grape_cloud;
+    *global_grape_cloud_ptr += *temp;
+    return global_grape_cloud_ptr;
 }
 
 
@@ -173,14 +191,14 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr downsample(const pcl::PointCloud<pcl::PointX
 	 return cloud_filtered;
 }
 
-
+Eigen::Matrix4f global_transformation;
 
 private:
 	int grape_count;
 	Eigen::Matrix4f local_transformation;
-	Eigen::Matrix4f global_transformation;
+	pcl::PointCloud<pcl::PointXYZ>::Ptr global_grape_cloud_ptr;
 	vector<Eigen::Matrix4f> all_camera_positions;
-	pcl::PointCloud<pcl::PointXYZ>::Ptr global_grape_cloud;// ( new pcl::PointCloud<pcl::PointXYZ>); 
+	//pcl::PointCloud<pcl::PointXYZ>::Ptr global_grape_cloud;// ( new pcl::PointCloud<pcl::PointXYZ>); 
     float error;
 
 };

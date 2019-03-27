@@ -24,7 +24,7 @@ void compute_SVD( Eigen::Matrix3f covariance_matrix){
 
 	Eigen::JacobiSVD<Eigen::Matrix3f> svd(covariance_matrix, Eigen::ComputeFullU | Eigen::ComputeFullV);
 	//vector<double> a;
-	a.clear();
+		a.clear();
 	a.push_back(svd.singularValues()[0]);
   	a.push_back(svd.singularValues()[1]);
   	a.push_back(svd.singularValues()[2]);
